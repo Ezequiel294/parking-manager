@@ -1,88 +1,89 @@
 from datetime import datetime
 
 
-def Tiempo_Estacionado(vehiculo, now):
-    tiempo_estacionado = now - datetime.strptime(vehiculo[1], "%H:%M")
-    total_minutos = tiempo_estacionado.seconds // 60
-    h_estacionado = tiempo_estacionado.seconds // 3600
-    m_estacionado = (tiempo_estacionado.seconds % 3600) // 60
-    if m_estacionado < 10:
-        m_estacionado = f"0{m_estacionado}"
+def ParkingTime(vehicle, now):
+    parked_time = now - datetime.strptime(vehicle[1], "%H:%M")
+    total_minutes = parked_time.seconds // 60
+    hours_parked = parked_time.seconds // 3600
+    minutes_parked = (parked_time.seconds % 3600) // 60
+    if minutes_parked < 10:
+        minutes_parked = f"0{minutes_parked}"
 
-    return h_estacionado, m_estacionado, total_minutos
+    return hours_parked, minutes_parked, total_minutes
 
 
-def Busqueda_Placa(plazas):
+def SearchByPlate(parking_spaces):
     while True:
         try:
-            placa_deseada = input("Placa del vehiculo: ")
-            for i in range(len(plazas)):
-                if len(plazas[i]) > 0 and plazas[i][0] == placa_deseada:
-                    return plazas[i]
+            desired_plate = input("Vehicle plate: ")
+            for i in range(len(parking_spaces)):
+                if len(parking_spaces[i]) > 0 and parking_spaces[i][0] == desired_plate:
+                    return parking_spaces[i]
             raise ValueError
         except ValueError:
-            print("Error: Placa no encontrada")
+            print("Error: Plate not found")
 
 
-def Busqueda_Plaza(plazas):
-    for i in range(len(plazas)):
+def SearchBySpace(parking_spaces):
+    for i in range(len(parking_spaces)):
         try:
-            plaza = int(input("Número de plaza: "))
-            if plaza <= 0 or plaza > len(plazas) or len(plazas[plaza - 1]) == 0:
+            space = int(input("Space number: "))
+            if space <= 0 or space > len(parking_spaces) or len(parking_spaces[space - 1]) == 0:
                 raise IndexError
             else:
-                vehiculo = plazas[plaza - 1]
-                return vehiculo
+                vehicle = parking_spaces[space - 1]
+                return vehicle
         except IndexError:
-            print("Error: Número de plaza no válido")
+            print("Error: Invalid space number")
 
 
-def Ingreso(plazas, now):
+def CheckIn(parking_spaces, now):
     while True:
         try:
-            num_plaza = int(input("Número de plaza: "))
-            num_plaza -= 1
-            if (num_plaza < 0) or (num_plaza >= len(plazas)):
+            space_number = int(input("Space number: "))
+            space_number -= 1
+            if (space_number < 0) or (space_number >= len(parking_spaces)):
                 raise IndexError
             else:
                 break
         except ValueError:
-            print("Error: Debe ingresar un número entero")
+            print("Error: You must enter an integer")
         except IndexError:
-            print("Error: Número de plaza no válido")
+            print("Error: Invalid space number")
 
-    placa = input("Placa del vehiculo: ")
-    hora_actual = now.strftime("%H:%M")
-    hora_entrada = input(f"Hora [{hora_actual}]: ")
-    if hora_entrada == "":
-        hora_entrada = hora_actual
-    plazas[num_plaza] = [placa, hora_entrada]
+    plate = input("Vehicle plate: ")
+    current_time = now.strftime("%H:%M")
+    entry_time = input(f"Time [{current_time}]: ")
+    if entry_time == "":
+        entry_time = current_time
+    parking_spaces[space_number] = [plate, entry_time]
 
-    return plazas
+    return parking_spaces
 
 
-def Cobro(vehiculo, minutos):
-    minutos = int(minutos)
-    if minutos <= 15:
-        cobro = 0
-    elif minutos > 15 and minutos < 540:
-        cobro = round(50 * (minutos // 15 - 1) + (minutos % 15) * 50 / 15)
+def CalculateCharge(vehicle, minutes):
+    minutes = int(minutes)
+    if minutes <= 15:
+        charge = 0
+    elif minutes > 15 and minutes < 540:
+        charge = round(50 * (minutes // 15 - 1) + (minutes % 15) * 50 / 15)
     else:
-        cobro = 6500
+        charge = 6500
 
-    return cobro
+    return charge
 
 
-def Estado(plazas, now):
-    for i in range(len(plazas)):
-        if len(plazas[i]) != 0:
-            h_estacionado, m_estacionado, total_minutos = Tiempo_Estacionado(plazas[i], now)
+def Status(parking_spaces, now):
+    for i in range(len(parking_spaces)):
+        if len(parking_spaces[i]) != 0:
+            hours_parked, minutes_parked, total_minutes = ParkingTime(
+                parking_spaces[i], now)
             print(
                 i + 1,
-                plazas[i][0],
-                plazas[i][1],
-                f"({h_estacionado}:{m_estacionado})",
-                Cobro(plazas[i], total_minutos)
+                parking_spaces[i][0],
+                parking_spaces[i][1],
+                f"({hours_parked}:{minutes_parked})",
+                CalculateCharge(parking_spaces[i], total_minutes)
             )
         else:
             print(f"{i+1} ------")
@@ -91,61 +92,62 @@ def Estado(plazas, now):
 def main():
     while True:
         try:
-            plazas_disp = int(input("Plazas disponibles: "))
-            if plazas_disp <= 0:
+            available_spaces = int(input("Available spaces: "))
+            if available_spaces <= 0:
                 raise ValueError
         except ValueError:
-            print("Error: Debe ingresar un número entero positivo diferente de cero")
+            print("Error: You must enter a positive integer greater than zero")
         else:
             break
 
-    plazas = []
-    for i in range(plazas_disp):
-        plazas.append([])
+    parking_spaces = []
+    for i in range(available_spaces):
+        parking_spaces.append([])
 
     now = datetime.now()
 
     while True:
         try:
-            opcion = input("Opcion [I]ngreso [C]obro [E]stado [S]alir: ")
-            if opcion in ["I", "i", "C", "c", "E", "e", "S", "s"]:
-                opcion = opcion.upper()
+            option = input("Option [C]heck-in [P]ayment [S]tatus [Q]uit: ")
+            if option in ["C", "c", "P", "p", "S", "s", "Q", "q"]:
+                option = option.upper()
             else:
                 raise ValueError
         except ValueError:
-            print("Error: Opción no válida")
+            print("Error: Invalid option")
 
-        if opcion == "I":
-            plazas = Ingreso(plazas, now)
+        if option == "C":
+            parking_spaces = CheckIn(parking_spaces, now)
 
-        elif opcion == "C":
+        elif option == "P":
             try:
-                metodo_busqueda = input("Buscar por [P]laca o [E]spacio: ")
-                if metodo_busqueda in ["P", "p"]:
-                    vehiculo = Busqueda_Placa(plazas)
-                elif metodo_busqueda in ["E", "e"]:
-                    vehiculo = Busqueda_Plaza(plazas)
+                search_method = input("Search by [P]late or [S]pace: ")
+                if search_method in ["P", "p"]:
+                    vehicle = SearchByPlate(parking_spaces)
+                elif search_method in ["S", "s"]:
+                    vehicle = SearchBySpace(parking_spaces)
                 else:
                     raise ValueError
             except ValueError:
-                print("Error: Opción no válida")
+                print("Error: Invalid option")
 
-            h_estacionado, m_estacionado, total_minutos = Tiempo_Estacionado(vehiculo, now)
-            cobro = Cobro(vehiculo, total_minutos)
+            hours_parked, minutes_parked, total_minutes = ParkingTime(
+                vehicle, now)
+            charge = CalculateCharge(vehicle, total_minutes)
 
-            print("Detalle del consumo")
-            print(f"Placa: {vehiculo[0]}")
-            print(f"Entrada: {vehiculo[1]}")
-            print(f"Salida: {now.strftime('%H:%M')}")
-            print(f"Tiempo: {h_estacionado}:{m_estacionado}")
-            print(f"Monto a pagar: {cobro}")
+            print("Consumption details")
+            print(f"Plate: {vehicle[0]}")
+            print(f"Entry time: {vehicle[1]}")
+            print(f"Exit time: {now.strftime('%H:%M')}")
+            print(f"Time parked: {hours_parked}:{minutes_parked}")
+            print(f"Amount to pay: {charge}")
 
-            plazas[plazas.index(vehiculo)] = []
+            parking_spaces[parking_spaces.index(vehicle)] = []
 
-        elif opcion == "E":
-            Estado(plazas, now)
+        elif option == "S":
+            Status(parking_spaces, now)
 
-        elif opcion == "S":
+        elif option == "Q":
             return 0
 
 
